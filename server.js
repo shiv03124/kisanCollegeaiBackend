@@ -8,11 +8,32 @@ dotenv.config();
 const app = express();
 
 
+// ✅ ALLOWED FRONTEND URLS
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://kisan-college-ai.vercel.app",
+];
+
+
 // ✅ CORS CONFIG
 app.use(
   cors({
-    origin: "http://localhost:5173", // Vite frontend
+    origin: function (origin, callback) {
+
+      // ✅ ALLOW POSTMAN / MOBILE APPS / SERVER REQUESTS
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(
+          new Error("Not allowed by CORS")
+        );
+      }
+    },
+
     methods: ["GET", "POST"],
+
     credentials: true,
   })
 );
@@ -53,12 +74,11 @@ app.post("/api/chat", async (req, res) => {
       }
     );
 
-    // ✅ GET RAW TEXT
+    // ✅ RAW RESPONSE
     const text = await response.text();
 
     console.log("RAW AI RESPONSE =>", text);
 
-    // ✅ HANDLE NON-JSON ERRORS
     let data;
 
     try {
@@ -70,7 +90,6 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
-    // ✅ SUCCESS RESPONSE
     return res.status(200).json(data);
 
   } catch (error) {
